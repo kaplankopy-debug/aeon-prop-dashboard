@@ -338,6 +338,14 @@
     </article>`;
   }
 
+
+  function compactSize(n) {
+    if (Number.isFinite(n) && n >= 1000 && Math.abs(n % 1000) < 1e-9) {
+      return "$" + (n / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 }) + "k";
+    }
+    return money.format(n);
+  }
+
   function renderAccounts() {
     const grid = $("account-grid");
     const accounts = state.accounts || [];
@@ -345,47 +353,82 @@
       grid.innerHTML = `<p class="empty">No accounts yet.</p>`;
       return;
     }
-    grid.innerHTML = accounts.map((a) => accountCard(a)).join("");
-    qsa(".account-card", grid).forEach((btn) => {
-      btn.addEventListener("click", () => onAccountTap(btn.dataset.id));
+    const p = portfolio(accounts);
+    const plPct = p.capital ? p.pl / p.capital : 0;
+    grid.innerHTML = `<div class="account-table" role="table" aria-label="Accounts">
+      <div class="account-head" role="row">
+        <span>Firm</span><span>Account</span><span>Size</span><span>Balance</span><span>P/L</span><span>Status</span>
+      </div>
+      ${accounts.map(accountRow).join("")}
+      <div class="account-total" role="row">
+        <span class="firm">Total</span>
+        <span class="num count hint">${accounts.length} accounts</span>
+        <span class="num size hint">${compactSize(p.capital)}</span>
+        <span class="num bal">${moneyFull.format(p.balance)}</span>
+        <span class="num pl-line ${tone(p.pl)}">${signedMoney(p.pl)} <small>(${signedPct(plPct)})</small></span>
+        <span class="pad"></span>
+      </div>
+    </div>`;
+    qsa(".account-row", grid).forEach((row) => {
+      const id = row.dataset.id;
+      row.querySelector(".account-row-main").addEventListener("click", () => toggleAccountRow(row));
+      row.querySelector("[data-edit-account]")?.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        onAccountTap(id);
+      });
     });
   }
 
-  function accountCard(a) {
+  function compactAcct(num) {
+    return num ? "#" + num : "";
+  }
+
+  function accountRow(a) {
     const m = accountMath(a);
-    const chips = [
-      `<span class="chip ${String(a.status || "").toLowerCase()}">${escapeHtml(a.status || "Status")}</span>`,
-      a.startingSizeAssumed ? `<span class="chip assumed">Start assumed</span>` : "",
-      a.drawdownDefaults ? `<span class="chip default">DD default</span>` : "",
-    ].join("");
+    const status = escapeHtml(a.status || "Status");
+    const statusClass = String(a.status || "").toLowerCase();
+    const sizeNote = a.startingSizeAssumed ? " (assumed)" : "";
     const targetLine = m.target == null
       ? "Not set"
       : `${money.format(m.target)} · ${m.toTarget >= 0 ? signedMoney(m.toTarget) + " to go" : signedMoney(-m.toTarget) + " past"}`;
-    return `<button type="button" class="account-card" data-id="${escapeHtml(a.id)}">
-      <div class="account-top">
-        <div>
-          <div class="account-firm">${escapeHtml(a.firm)}</div>
-          <div class="account-meta">${escapeHtml(a.label || "")} · #${escapeHtml(a.accountNumber)} · ${escapeHtml(a.server)}</div>
+    return `<div class="account-row" data-id="${escapeHtml(a.id)}" aria-expanded="false">
+      <button type="button" class="account-row-main" aria-expanded="false">
+        <span class="firm">${escapeHtml(a.firm)}</span>
+        <span class="acct">${escapeHtml(compactAcct(a.accountNumber))}<span class="meta-size"> · ${escapeHtml(compactSize(m.start))}${a.startingSizeAssumed ? " assumed" : ""}</span></span>
+        <span class="num size">${compactSize(m.start)}</span>
+        <span class="num bal">${moneyFull.format(m.bal)}</span>
+        <span class="num pl-line ${tone(m.pl)}">${signedMoney(m.pl)} <small>(${signedPct(m.plPct)})</small></span>
+        <span class="chip ${statusClass}">${status}</span>
+      </button>
+      <div class="account-detail">
+        <div class="metrics">
+          <div class="metric"><div class="k">Label</div><div class="v">${escapeHtml(a.label || "—")}</div></div>
+          <div class="metric"><div class="k">Server</div><div class="v">${escapeHtml(a.server || "—")}</div></div>
+          <div class="metric"><div class="k">Starting size${sizeNote}</div><div class="v">${money.format(m.start)}</div></div>
+          <div class="metric"><div class="k">Max DD ${m.maxDD}%${a.drawdownDefaults ? " · default" : ""}</div><div class="v">Floor ${money.format(m.floor)}</div></div>
+          <div class="metric"><div class="k">Room to max-DD floor</div><div class="v ${tone(m.toFloor)}">${signedMoney(m.toFloor)}</div></div>
+          <div class="metric"><div class="k">Daily DD limit${a.drawdownDefaults ? " · default" : ""}</div><div class="v">${m.dailyDD}%</div></div>
+          <div class="metric"><div class="k">Profit target${a.profitTargetDefault ? " · default" : ""}</div><div class="v">${escapeHtml(targetLine)}</div></div>
+          <div class="metric"><div class="k">Updated</div><div class="v">${escapeHtml(formatDate(a.lastUpdated))} · Hedge · USD</div></div>
         </div>
-        <div class="chips">${chips}</div>
+        <div class="account-detail-actions">
+          <button type="button" class="button" data-edit-account>Update</button>
+        </div>
       </div>
-      <div class="account-balance">
-        <div class="lbl">Balance</div>
-        <div class="val">${moneyFull.format(m.bal)}</div>
-      </div>
-      <div class="metrics">
-        <div class="metric"><div class="k">Starting size${a.startingSizeAssumed ? " (assumed)" : ""}</div><div class="v">${money.format(m.start)}</div></div>
-        <div class="metric"><div class="k">P/L vs start</div><div class="v ${tone(m.pl)}">${signedMoney(m.pl)} (${signedPct(m.plPct)})</div></div>
-        <div class="metric"><div class="k">Max DD ${m.maxDD}%${a.drawdownDefaults ? " · default" : ""}</div><div class="v">Floor ${money.format(m.floor)}</div></div>
-        <div class="metric"><div class="k">Room to max-DD floor</div><div class="v ${tone(m.toFloor)}">${signedMoney(m.toFloor)}</div></div>
-        <div class="metric"><div class="k">Daily DD limit${a.drawdownDefaults ? " · default" : ""}</div><div class="v">${m.dailyDD}%</div></div>
-        <div class="metric"><div class="k">Profit target${a.profitTargetDefault ? " · default" : ""}</div><div class="v">${escapeHtml(targetLine)}</div></div>
-      </div>
-      <div class="account-foot">
-        <span>Hedge · USD</span>
-        <span>Updated ${escapeHtml(formatDate(a.lastUpdated))}${editMode ? " · tap to edit" : " · tap to update"}</span>
-      </div>
-    </button>`;
+    </div>`;
+  }
+
+  function toggleAccountRow(row) {
+    const open = row.getAttribute("aria-expanded") === "true";
+    qsa(".account-row", $("account-grid")).forEach((r) => {
+      r.setAttribute("aria-expanded", "false");
+      r.querySelector(".account-row-main")?.setAttribute("aria-expanded", "false");
+    });
+    if (!open) {
+      row.setAttribute("aria-expanded", "true");
+      row.querySelector(".account-row-main")?.setAttribute("aria-expanded", "true");
+    }
   }
 
   async function onAccountTap(id) {

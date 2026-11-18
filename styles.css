@@ -190,45 +190,60 @@ ul { list-style: none; }
 .section-heading h2 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
 .section-heading p { color: var(--muted); font-size: 12px; }
 
-.account-grid {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.account-list { min-width: 0; }
+.account-table { width: 100%; }
+.account-head, .account-row-main, .account-total {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.05fr) minmax(64px, 0.7fr) minmax(96px, 0.95fr) minmax(118px, 1.15fr) auto;
+  gap: 8px 12px;
+  align-items: center;
 }
-.account-card {
-  border: 1px solid var(--border); background: var(--panel-soft);
-  border-radius: 12px; padding: 18px 18px 0; min-width: 0;
-  text-align: left; width: 100%; display: block; color: inherit;
-  transition: border-color .15s, transform .15s;
+.account-head {
+  color: var(--muted); text-transform: uppercase; letter-spacing: .7px;
+  font-size: 9px; padding: 0 4px 8px; border-bottom: 1px solid var(--border);
 }
-button.account-card { cursor: pointer; }
-button.account-card:hover { border-color: color-mix(in oklab, var(--amber) 45%, var(--border)); }
-.account-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.account-firm { font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
-.account-meta { color: var(--muted); font-size: 11px; margin-top: 2px; overflow-wrap: anywhere; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.account-row { border-bottom: 1px solid var(--border); }
+.account-row:last-of-type { border-bottom: 0; }
+.account-row-main {
+  width: 100%; text-align: left; color: inherit; background: none; border: 0;
+  padding: 11px 4px; border-radius: 8px; cursor: pointer;
+}
+.account-row-main:hover { background: var(--panel-soft); }
+.account-row[aria-expanded="true"] .account-row-main { background: var(--panel-soft); }
+.account-row-main .firm { font-weight: 600; font-size: 13px; letter-spacing: -.2px; min-width: 0; overflow-wrap: anywhere; }
+.account-row-main .num, .account-total .num { font-variant-numeric: tabular-nums; font-size: 13px; overflow-wrap: anywhere; }
+.account-row-main .acct { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.account-row-main .acct .meta-size { display: none; }
+.account-row-main .pl-line { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+.account-row-main .pl-line small, .account-total .pl-line small { font-size: 10px; opacity: .85; }
+.account-row-main .up, .account-total .up { color: var(--up); }
+.account-row-main .down, .account-total .down { color: var(--danger); }
+.account-row-main .chip { justify-self: end; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  border: 1px solid var(--border); border-radius: 999px;
+  border: 1px solid var(--border); border-radius: 999px; display: inline-block;
   padding: 3px 8px; font-size: 9px; letter-spacing: .4px;
-  text-transform: uppercase; color: var(--muted);
+  text-transform: uppercase; color: var(--muted); white-space: nowrap;
 }
 .chip.funded, .chip.challenge { color: var(--text); }
 .chip.assumed, .chip.default { color: var(--amber); border-color: var(--amber-line); background: var(--amber-soft); }
-.account-balance { margin-top: 14px; }
-.account-balance .lbl { font-size: 9px; letter-spacing: .9px; text-transform: uppercase; color: var(--muted); }
-.account-balance .val { font-size: 28px; letter-spacing: -1px; font-weight: 500; line-height: 1.25; }
-.metrics {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
-  margin: 14px 0 0; padding-bottom: 4px;
+.account-detail {
+  display: none;
+  padding: 4px 4px 14px;
 }
+.account-row[aria-expanded="true"] .account-detail { display: block; }
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
 .metric .k { font-size: 9px; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
-.metric .v { font-size: 13px; margin-top: 1px; overflow-wrap: anywhere; }
+.metric .v { font-size: 12px; margin-top: 1px; overflow-wrap: anywhere; }
 .metric .v.up { color: var(--up); }
 .metric .v.down { color: var(--danger); }
-.account-foot {
-  color: var(--muted); border-top: 1px solid var(--border);
-  margin: 14px -18px 0; padding: 10px 18px; font-size: 9px;
-  display: flex; justify-content: space-between; gap: 8px;
+.account-detail-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
+.account-total {
+  margin-top: 4px; padding: 12px 4px 2px; border-top: 1px solid var(--border);
+  font-weight: 600; font-size: 13px;
 }
+.account-total .firm { letter-spacing: -.2px; }
+.account-total .hint { color: var(--muted); font-weight: 400; font-size: 11px; }
 
 .bars { display: grid; gap: 14px; margin-top: 8px; }
 .bar-row .bar-head {
@@ -342,7 +357,6 @@ textarea { min-height: 80px; resize: vertical; }
   .main { margin-left: 170px; }
   .topbar { padding: 0 22px; }
   .page-content { padding: 28px 22px 32px; }
-  .account-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
@@ -379,7 +393,29 @@ textarea { min-height: 80px; resize: vertical; }
   .stat-number { margin-top: 12px; font-size: 26px; }
   .stat-footer { margin: 0 -13px; padding: 9px 13px; font-size: 8px; }
   .panel { padding: 18px 15px; }
-  .account-balance .val { font-size: 24px; }
+  .account-head { display: none; }
+  .account-row-main, .account-total {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "firm status"
+      "meta meta"
+      "bal pl";
+    gap: 2px 10px;
+    padding: 12px 0;
+  }
+  .account-row-main .firm { grid-area: firm; font-size: 14px; }
+  .account-row-main .chip { grid-area: status; }
+  .account-row-main .acct { grid-area: meta; font-size: 11px; }
+  .account-row-main .acct .meta-size { display: inline; }
+  .account-row-main .size { display: none; }
+  .account-row-main .bal { grid-area: bal; font-size: 16px; letter-spacing: -.4px; font-weight: 500; padding-top: 4px; }
+  .account-row-main .pl-line { grid-area: pl; padding-top: 4px; }
+  .account-total .firm { grid-area: firm; }
+  .account-total .count, .account-total .size { display: none; }
+  .account-total .bal { grid-area: bal; padding-top: 4px; }
+  .account-total .pl-line { grid-area: pl; padding-top: 4px; justify-self: end; }
+  .account-total .pad { display: none; }
+  .metrics { grid-template-columns: 1fr 1fr; }
   .payout-kpis { grid-template-columns: 1fr 1fr; }
   .dialog { padding: 22px; }
   .toast { bottom: calc(90px + env(safe-area-inset-bottom)); }
