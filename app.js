@@ -235,8 +235,8 @@
     $("edit-btn").textContent = "Done";
     $("edit-btn").classList.remove("secondary");
     $("add-account-btn").hidden = false;
-    $("add-payout-btn").hidden = false;
-    $("settings-btn").hidden = false;
+    $("add-payout-btn").hidden = true;
+    $("settings-btn").hidden = true;
   }
 
   function leaveEdit() {
@@ -313,29 +313,32 @@
     renderAccounts();
     renderPayouts();
     $("add-account-btn").hidden = !editMode;
-    $("add-payout-btn").hidden = !editMode;
-    $("settings-btn").hidden = !editMode;
+    $("add-payout-btn").hidden = true;
+    $("settings-btn").hidden = true;
   }
 
   function renderStats() {
     const p = portfolio(state.accounts);
     const t = payoutTotals();
-    const goal = Number(state.settings?.monthlyGoal) || 10000;
+    const plPct = p.capital ? p.pl / p.capital : 0;
     $("stats").innerHTML = [
-      statCard("Total capital", money.format(p.capital), `${p.count} accounts · starting size`, "Sum of each account’s starting size."),
-      statCard("Total balance", money.format(p.balance), "Combined live balances", "Update any balance by tapping the account."),
-      statCard("Total P/L", signedMoney(p.pl), signedPct(p.capital ? p.pl / p.capital : 0) + " vs starting size", "Profit or loss versus starting size.", tone(p.pl)),
-      statCard("2026 payouts", money.format(t.ytd), `${money.format(t.pendingTotal)} pending`, `Goal ${money.format(goal)} / month through Dec 2026.`),
+      statMini("Capital", compactSize(p.capital)),
+      statMini("Balance", compactMoney(p.balance)),
+      statMini("P/L", signedPct(plPct), tone(p.pl)),
+      statMini("2026", compactMoney(t.ytd)),
     ].join("");
   }
 
-  function statCard(label, number, blurb, footer, toneName) {
-    return `<article class="stat">
-      <div class="stat-label"><span>${escapeHtml(label)}</span></div>
-      <div class="stat-number ${toneName || ""}">${escapeHtml(number)}</div>
-      <p>${escapeHtml(blurb)}</p>
-      <div class="stat-footer">${escapeHtml(footer)}</div>
-    </article>`;
+  function statMini(label, number, toneName) {
+    return `<div class="stat-mini"><span class="k">${escapeHtml(label)}</span><span class="v ${toneName || ""}">${escapeHtml(number)}</span></div>`;
+  }
+
+  function compactMoney(n) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(n);
   }
 
 
@@ -344,6 +347,37 @@
       return "$" + (n / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 }) + "k";
     }
     return money.format(n);
+  }
+
+  function shortFirm(firm) {
+    const map = {
+      FundingPips: "FPips",
+      "Beirman Capital": "Beirman",
+      FTMO: "FTMO",
+    };
+    if (map[firm]) return map[firm];
+    const first = String(firm || "Acct").split(/\s+/)[0];
+    return first.length > 8 ? first.slice(0, 7) : first;
+  }
+
+  function shortLabel(a) {
+    const digits = String(a.accountNumber || "").replace(/\D/g, "");
+    const tail = digits.slice(-4);
+    return shortFirm(a.firm) + (tail ? " …" + tail : "");
+  }
+
+  function formatTargetPct(n) {
+    if (n == null || n === "" || Number.isNaN(Number(n))) return "—";
+    const v = Number(n);
+    if (Math.abs(v - Math.round(v)) < 1e-9) return Math.round(v) + "%";
+    return v.toLocaleString("en-US", { maximumFractionDigits: 1 }) + "%";
+  }
+
+  function formatRatioPct(n) {
+    return (Math.abs(n) * 100).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + "%";
   }
 
   function renderAccounts() {
@@ -355,18 +389,18 @@
     }
     const p = portfolio(accounts);
     const plPct = p.capital ? p.pl / p.capital : 0;
+    const totDD = plPct < 0 ? formatRatioPct(plPct) : "—";
+    const totUp = plPct > 0 ? formatRatioPct(plPct) : "—";
     grid.innerHTML = `<div class="account-table" role="table" aria-label="Accounts">
       <div class="account-head" role="row">
-        <span>Firm</span><span>Account</span><span>Size</span><span>Balance</span><span>P/L</span><span>Status</span>
+        <span>Account</span><span>Tgt</span><span>DD</span><span>Profit</span>
       </div>
       ${accounts.map(accountRow).join("")}
       <div class="account-total" role="row">
-        <span class="firm">Total</span>
-        <span class="num count hint">${accounts.length} accounts</span>
-        <span class="num size hint">${compactSize(p.capital)}</span>
-        <span class="num bal">${moneyFull.format(p.balance)}</span>
-        <span class="num pl-line ${tone(p.pl)}">${signedMoney(p.pl)} <small>(${signedPct(plPct)})</small></span>
-        <span class="pad"></span>
+        <span class="label">Total</span>
+        <span class="num dash">—</span>
+        <span class="num ${plPct < 0 ? "down" : "dash"}">${totDD}</span>
+        <span class="num ${plPct > 0 ? "up" : "dash"}">${totUp}</span>
       </div>
     </div>`;
     qsa(".account-row", grid).forEach((row) => {
@@ -380,32 +414,32 @@
     });
   }
 
-  function compactAcct(num) {
-    return num ? "#" + num : "";
-  }
-
   function accountRow(a) {
     const m = accountMath(a);
-    const status = escapeHtml(a.status || "Status");
-    const statusClass = String(a.status || "").toLowerCase();
     const sizeNote = a.startingSizeAssumed ? " (assumed)" : "";
     const targetLine = m.target == null
       ? "Not set"
       : `${money.format(m.target)} · ${m.toTarget >= 0 ? signedMoney(m.toTarget) + " to go" : signedMoney(-m.toTarget) + " past"}`;
+    const inDD = m.bal < m.start;
+    const inProfit = m.bal > m.start;
+    const ddText = inDD ? formatRatioPct(m.plPct) : "—";
+    const upText = inProfit ? formatRatioPct(m.plPct) : "—";
     return `<div class="account-row" data-id="${escapeHtml(a.id)}" aria-expanded="false">
       <button type="button" class="account-row-main" aria-expanded="false">
-        <span class="firm">${escapeHtml(a.firm)}</span>
-        <span class="acct">${escapeHtml(compactAcct(a.accountNumber))}<span class="meta-size"> · ${escapeHtml(compactSize(m.start))}${a.startingSizeAssumed ? " assumed" : ""}</span></span>
-        <span class="num size">${compactSize(m.start)}</span>
-        <span class="num bal">${moneyFull.format(m.bal)}</span>
-        <span class="num pl-line ${tone(m.pl)}">${signedMoney(m.pl)} <small>(${signedPct(m.plPct)})</small></span>
-        <span class="chip ${statusClass}">${status}</span>
+        <span class="label">${escapeHtml(shortLabel(a))}</span>
+        <span class="num">${escapeHtml(formatTargetPct(m.targetPct))}</span>
+        <span class="num ${inDD ? "down" : "dash"}">${ddText}</span>
+        <span class="num ${inProfit ? "up" : "dash"}">${upText}</span>
       </button>
       <div class="account-detail">
         <div class="metrics">
-          <div class="metric"><div class="k">Label</div><div class="v">${escapeHtml(a.label || "—")}</div></div>
+          <div class="metric"><div class="k">Firm / label</div><div class="v">${escapeHtml(a.firm)} · ${escapeHtml(a.label || "—")}</div></div>
+          <div class="metric"><div class="k">Account</div><div class="v">#${escapeHtml(a.accountNumber || "—")}</div></div>
           <div class="metric"><div class="k">Server</div><div class="v">${escapeHtml(a.server || "—")}</div></div>
+          <div class="metric"><div class="k">Status</div><div class="v">${escapeHtml(a.status || "—")}</div></div>
           <div class="metric"><div class="k">Starting size${sizeNote}</div><div class="v">${money.format(m.start)}</div></div>
+          <div class="metric"><div class="k">Balance</div><div class="v">${moneyFull.format(m.bal)}</div></div>
+          <div class="metric"><div class="k">P/L vs start</div><div class="v ${tone(m.pl)}">${signedMoney(m.pl)} (${signedPct(m.plPct)})</div></div>
           <div class="metric"><div class="k">Max DD ${m.maxDD}%${a.drawdownDefaults ? " · default" : ""}</div><div class="v">Floor ${money.format(m.floor)}</div></div>
           <div class="metric"><div class="k">Room to max-DD floor</div><div class="v ${tone(m.toFloor)}">${signedMoney(m.toFloor)}</div></div>
           <div class="metric"><div class="k">Daily DD limit${a.drawdownDefaults ? " · default" : ""}</div><div class="v">${m.dailyDD}%</div></div>

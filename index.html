@@ -18,7 +18,7 @@
     <nav aria-label="Sections">
       <button type="button" data-go="overview" aria-current="page">Overview<span class="nav-dot"></span></button>
       <button type="button" data-go="accounts">Accounts</button>
-      <button type="button" data-go="payouts">Payouts</button>
+      <button type="button" data-go="payouts" hidden>Payouts</button>
     </nav>
     <div class="sidebar-bottom">
       <p class="home-badge"><span><strong>Private desk</strong>Figures stay on this site. No broker logins are stored.</span></p>
@@ -31,6 +31,8 @@
       <div class="topbar-right">
         <span class="sync-dot" id="sync-dot" aria-hidden="true"></span>
         <span id="sync-label">Loading</span>
+        <button type="button" class="button secondary" id="theme-btn">Light</button>
+        <button type="button" class="button secondary" id="edit-btn">Edit</button>
       </div>
     </header>
 
@@ -40,14 +42,10 @@
           <div>
             <p class="eyebrow">Live book · USD · Hedge</p>
             <h1>Prop accounts</h1>
-            <p>Balances and payout progress in one place. Tap an account for details or to update a figure — you’ll be asked for the edit key once on this device.</p>
-          </div>
-          <div class="heading-actions">
-            <button type="button" class="button secondary" id="theme-btn">Light</button>
-            <button type="button" class="button secondary" id="edit-btn">Edit</button>
+            <p>Tap a row for details or to update a balance. You’ll be asked for the edit key once on this device.</p>
           </div>
         </div>
-        <div class="stats-grid" id="stats"></div>
+        <div class="stats-row" id="stats"></div>
       </section>
 
       <section class="panel" id="accounts">
@@ -61,7 +59,7 @@
         <div class="account-list" id="account-grid"></div>
       </section>
 
-      <section class="panel" id="payouts">
+      <section class="panel" id="payouts" hidden>
         <div class="section-heading">
           <div>
             <h2>Payouts</h2>

@@ -48,6 +48,7 @@ body {
 }
 button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
 button { cursor: pointer; background: none; border: 0; }
+[hidden] { display: none !important; }
 img, svg { display: block; }
 a { color: inherit; text-decoration: none; }
 ul { list-style: none; }
@@ -117,6 +118,10 @@ ul { list-style: none; }
   display: flex; align-items: center; gap: 8px; font-size: 9px;
   text-transform: uppercase;
 }
+.topbar-right .button {
+  text-transform: none; letter-spacing: 0; font-size: 11px;
+  padding: 6px 10px; min-height: 0;
+}
 .sync-dot { background: var(--up); border-radius: 50%; width: 5px; height: 5px; }
 .sync-dot.warn { background: var(--amber); }
 .sync-dot.err { background: var(--danger); }
@@ -153,6 +158,26 @@ ul { list-style: none; }
   padding: 4px 0; font-size: 11px; font-weight: 400;
 }
 
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px; margin: 8px 0 14px;
+}
+.stat-mini {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 8px; min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.stat-mini .k {
+  letter-spacing: .6px; color: var(--muted); text-transform: uppercase;
+  font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stat-mini .v {
+  font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600;
+  letter-spacing: -.3px; line-height: 1.25; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.stat-mini .v.up { color: var(--up); }
+.stat-mini .v.down { color: var(--danger); }
 .stats-grid {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px; margin: 15px 0 24px;
@@ -190,35 +215,42 @@ ul { list-style: none; }
 .section-heading h2 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
 .section-heading p { color: var(--muted); font-size: 12px; }
 
-.account-list { min-width: 0; }
-.account-table { width: 100%; }
+.account-list { min-width: 0; overflow-x: hidden; }
+.account-table { width: 100%; min-width: 0; }
 .account-head, .account-row-main, .account-total {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.05fr) minmax(64px, 0.7fr) minmax(96px, 0.95fr) minmax(118px, 1.15fr) auto;
-  gap: 8px 12px;
+  grid-template-columns: minmax(0, 1.3fr) 36px 44px 48px;
+  gap: 0 8px;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 .account-head {
-  color: var(--muted); text-transform: uppercase; letter-spacing: .7px;
-  font-size: 9px; padding: 0 4px 8px; border-bottom: 1px solid var(--border);
+  color: var(--muted); letter-spacing: .2px;
+  font-size: 8px; padding: 0 2px 6px; border-bottom: 1px solid var(--border);
 }
-.account-row { border-bottom: 1px solid var(--border); }
+.account-head span:not(:first-child),
+.account-row-main .num,
+.account-total .num { text-align: right; }
+.account-row { border-bottom: 1px solid var(--border); min-width: 0; }
 .account-row:last-of-type { border-bottom: 0; }
 .account-row-main {
   width: 100%; text-align: left; color: inherit; background: none; border: 0;
-  padding: 11px 4px; border-radius: 8px; cursor: pointer;
+  padding: 7px 2px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; line-height: 1.2;
 }
 .account-row-main:hover { background: var(--panel-soft); }
 .account-row[aria-expanded="true"] .account-row-main { background: var(--panel-soft); }
-.account-row-main .firm { font-weight: 600; font-size: 13px; letter-spacing: -.2px; min-width: 0; overflow-wrap: anywhere; }
-.account-row-main .num, .account-total .num { font-variant-numeric: tabular-nums; font-size: 13px; overflow-wrap: anywhere; }
-.account-row-main .acct { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-.account-row-main .acct .meta-size { display: none; }
-.account-row-main .pl-line { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
-.account-row-main .pl-line small, .account-total .pl-line small { font-size: 10px; opacity: .85; }
+.account-row-main .label {
+  font-weight: 600; letter-spacing: -.2px; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.account-row-main .num, .account-total .num {
+  font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px;
+}
 .account-row-main .up, .account-total .up { color: var(--up); }
 .account-row-main .down, .account-total .down { color: var(--danger); }
-.account-row-main .chip { justify-self: end; }
+.account-row-main .dash, .account-total .dash { color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   border: 1px solid var(--border); border-radius: 999px; display: inline-block;
@@ -239,11 +271,10 @@ ul { list-style: none; }
 .metric .v.down { color: var(--danger); }
 .account-detail-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
 .account-total {
-  margin-top: 4px; padding: 12px 4px 2px; border-top: 1px solid var(--border);
-  font-weight: 600; font-size: 13px;
+  margin-top: 2px; padding: 8px 2px 0; border-top: 1px solid var(--border);
+  font-weight: 600; font-size: 12px;
 }
-.account-total .firm { letter-spacing: -.2px; }
-.account-total .hint { color: var(--muted); font-weight: 400; font-size: 11px; }
+.account-total .label { letter-spacing: -.2px; white-space: nowrap; }
 
 .bars { display: grid; gap: 14px; margin-top: 8px; }
 .bar-row .bar-head {
@@ -350,7 +381,7 @@ textarea { min-height: 80px; resize: vertical; }
   .sidebar { width: 190px; padding: 28px 16px; }
   .main { margin-left: 190px; }
   .page-heading h1 { font-size: 30px; }
-  .stats-grid, .payout-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .payout-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .sidebar { width: 170px; }
@@ -374,51 +405,34 @@ textarea { min-height: 80px; resize: vertical; }
     border-radius: 8px; flex-direction: column; gap: 3px;
     padding: 6px 12px; font-size: 9px; width: auto;
   }
+  .sidebar { display: none; }
   .main { margin-left: 0; }
-  .topbar { height: 54px; padding: 0 16px; }
-  .topbar-right { letter-spacing: .5px; font-size: 8px; }
-  .page-content { padding: 22px 16px calc(205px + env(safe-area-inset-bottom)); }
-  .page-heading { display: block; margin-top: 4px; }
-  .page-heading h1 { font-size: 27px; }
-  .page-heading p { font-size: 11px; }
-  .eyebrow { font-size: 9px; }
-  .heading-actions {
-    position: fixed; right: 16px; bottom: calc(83px + env(safe-area-inset-bottom));
-    z-index: 25; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 0;
+  .page-content { padding: 8px 12px 12px; }
+  .page-heading { display: none; }
+  .stats-row { gap: 6px; margin: 0 0 10px; }
+  .stat-mini { padding: 5px 6px; border-radius: 7px; }
+  .stat-mini .k { font-size: 7px; }
+  .stat-mini .v { font-size: 11px; }
+  .panel { padding: 10px 10px 8px; margin-bottom: 0; }
+  .section-heading { margin-bottom: 8px; gap: 8px; }
+  .section-heading h2 { font-size: 14px; }
+  .section-heading p { display: none; }
+  .topbar { height: 44px; padding: 0 10px; }
+  .topbar-right { gap: 6px; font-size: 8px; }
+  .topbar-right .button { padding: 5px 8px; font-size: 11px; }
+  .breadcrumb span { margin: 0 8px; }
+  .account-head { font-size: 8px; letter-spacing: 0; padding: 0 1px 5px; }
+  .account-head, .account-row-main, .account-total {
+    grid-template-columns: minmax(0, 1.3fr) 32px 42px 48px;
+    gap: 0 6px;
   }
-  .heading-actions button { box-shadow: var(--shadow); min-height: 44px; padding: 12px 16px; }
-  .heading-actions .secondary { background: var(--panel); }
-  .stats-grid { gap: 10px; margin-top: 12px; }
-  .stat { padding: 15px 13px 0; }
-  .stat-number { margin-top: 12px; font-size: 26px; }
-  .stat-footer { margin: 0 -13px; padding: 9px 13px; font-size: 8px; }
-  .panel { padding: 18px 15px; }
-  .account-head { display: none; }
-  .account-row-main, .account-total {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "firm status"
-      "meta meta"
-      "bal pl";
-    gap: 2px 10px;
-    padding: 12px 0;
-  }
-  .account-row-main .firm { grid-area: firm; font-size: 14px; }
-  .account-row-main .chip { grid-area: status; }
-  .account-row-main .acct { grid-area: meta; font-size: 11px; }
-  .account-row-main .acct .meta-size { display: inline; }
-  .account-row-main .size { display: none; }
-  .account-row-main .bal { grid-area: bal; font-size: 16px; letter-spacing: -.4px; font-weight: 500; padding-top: 4px; }
-  .account-row-main .pl-line { grid-area: pl; padding-top: 4px; }
-  .account-total .firm { grid-area: firm; }
-  .account-total .count, .account-total .size { display: none; }
-  .account-total .bal { grid-area: bal; padding-top: 4px; }
-  .account-total .pl-line { grid-area: pl; padding-top: 4px; justify-self: end; }
-  .account-total .pad { display: none; }
+  .account-row-main { padding: 6px 1px; font-size: 11px; }
+  .account-row-main .num, .account-total .num { font-size: 11px; }
+  .account-total { padding: 8px 1px 0; font-size: 11px; }
   .metrics { grid-template-columns: 1fr 1fr; }
   .payout-kpis { grid-template-columns: 1fr 1fr; }
   .dialog { padding: 22px; }
-  .toast { bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .toast { bottom: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
