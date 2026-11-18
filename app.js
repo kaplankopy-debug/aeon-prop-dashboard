@@ -342,6 +342,16 @@
   }
 
 
+  function compactBalance(n) {
+    if (!Number.isFinite(n)) return "—";
+    if (Math.abs(n) >= 1000) {
+      const k = n / 1000;
+      const text = k.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+      return text + "k";
+    }
+    return compactMoney(n);
+  }
+
   function compactSize(n) {
     if (Number.isFinite(n) && n >= 1000 && Math.abs(n % 1000) < 1e-9) {
       return "$" + (n / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 }) + "k";
@@ -393,11 +403,12 @@
     const totUp = plPct > 0 ? formatRatioPct(plPct) : "—";
     grid.innerHTML = `<div class="account-table" role="table" aria-label="Accounts">
       <div class="account-head" role="row">
-        <span>Account</span><span>Tgt</span><span>DD</span><span>Profit</span>
+        <span>Account</span><span>Bal</span><span>Tgt</span><span>DD</span><span>Profit</span>
       </div>
       ${accounts.map(accountRow).join("")}
       <div class="account-total" role="row">
         <span class="label">Total</span>
+        <span class="num">${compactBalance(p.balance)}</span>
         <span class="num dash">—</span>
         <span class="num ${plPct < 0 ? "down" : "dash"}">${totDD}</span>
         <span class="num ${plPct > 0 ? "up" : "dash"}">${totUp}</span>
@@ -427,6 +438,7 @@
     return `<div class="account-row" data-id="${escapeHtml(a.id)}" aria-expanded="false">
       <button type="button" class="account-row-main" aria-expanded="false">
         <span class="label">${escapeHtml(shortLabel(a))}</span>
+        <span class="num bal">${escapeHtml(compactBalance(m.bal))}</span>
         <span class="num">${escapeHtml(formatTargetPct(m.targetPct))}</span>
         <span class="num ${inDD ? "down" : "dash"}">${ddText}</span>
         <span class="num ${inProfit ? "up" : "dash"}">${upText}</span>
